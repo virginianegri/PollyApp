@@ -1,0 +1,9 @@
+{
+    "dependencies": {
+        "aws-sdk": ">= 2.0.9",
+        "dropbox-v2-api": "^2.4.6",
+        "inquirer": "^7.0.0",
+        "node-uuid": ">= 1.4.1",
+        "onedrive-auth": "^1.1.1"
+    }
+}
