@@ -1,6 +1,6 @@
 const Fs = require('fs')
 const inquirer = require('inquirer');
-const uploadFile = require('./sample');
+const uploadFile = require('./dropbox');
 const { getVoices, generateAudio } = require('./polly');
 const { pollyQuestions } = require('./questions');
 
