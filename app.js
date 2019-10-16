@@ -1,7 +1,7 @@
 const Fs = require('fs')
 const inquirer = require('inquirer');
 const uploadFile = require('./dropbox');
-const { getVoices, generateAudio } = require('./polly');
+const { authenticate, getVoices, generateAudio } = require('./polly');
 const { pollyQuestions } = require('./questions');
 
 /*
@@ -32,34 +32,41 @@ var questions = [
 ];
 */
 
-getVoices().then((allVoices) => {
-    let voices = [];
-    allVoices.map(v => voices.push(v.Id));
+authenticate().then(() => {
+    console.log('Authenticated!');
+    getVoices().then((allVoices) => {
+        let voices = [];
+        allVoices.map(v => voices.push(v.Id));
 
-    const questions = pollyQuestions(voices);
+        const questions = pollyQuestions(voices);
 
-    inquirer.prompt(questions).then(answers => {
-        console.log(answers);
-        console.log(JSON.stringify(answers, null, ' '));
+        inquirer.prompt(questions).then(answers => {
+            console.log(answers);
+            console.log(JSON.stringify(answers, null, ' '));
 
-        readFile(answers['text_path']).then((text) => {
+            readFile(answers['text_path']).then((text) => {
 
-            let params = {
-                'Text': text,
-                'OutputFormat': 'mp3',
-                'VoiceId': answers['voice_id']
-            }
+                let params = {
+                    'Text': text,
+                    'OutputFormat': 'mp3',
+                    'VoiceId': answers['voice_id']
+                }
 
-            generateAudio(params, answers['file_name']).then((filePath) => {
-                uploadFile('jlIPA3BaeGwAAAAAAAAALhS9geBr8v32zVqVccWuQpa2tAZeb4HAhL7BFbw9TAR2', "./" + filePath, '/' + answers['destination_folder'] + '/' + filePath)
+                generateAudio(params, answers['file_name']).then((filePath) => {
+                    uploadFile('jlIPA3BaeGwAAAAAAAAALhS9geBr8v32zVqVccWuQpa2tAZeb4HAhL7BFbw9TAR2', "./" + filePath, '/' + answers['destination_folder'] + '/' + filePath)
+                }, err => {
+                    console.log(err)
+                })
             }, err => {
-                console.log(err)
+                console.log(err);
             })
-        }, err => {
-            console.log(err);
         })
     })
+},err => {
+    console.log(err);
 })
+
+
 
 const readFile = (path) => {
     return new Promise((resolve, reject) => {
