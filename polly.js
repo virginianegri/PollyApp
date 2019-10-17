@@ -1,37 +1,50 @@
 const AWS = require('aws-sdk')
 const Fs = require('fs');
 
+// Set the region where your identity pool exists (us-east-1, eu-west-1)
 AWS.config.region = 'us-east-1';
 
 let Polly;
 
+/**
+ * Authenticate using Amazon Cognito 
+ * @param poolId 
+ * @resolve Polly object
+ * @reject Error 
+ */
 const authenticate = (poolId) => {
     console.log("Authenticating...");
     
+    // Configure the credentials provider to use your identity pool
     AWS.config.credentials = new AWS.CognitoIdentityCredentials({
         IdentityPoolId: poolId
         //IdentityPoolId: 'us-east-1:7bed0a02-3ef1-473e-9b9f-b4860fd67f85'
     });
     
     return new Promise((resolve, reject) => {
+        // Make the call to obtain credentials
         AWS.config.credentials.get((err) => {
-            if (err) reject(err);
+            if (err) 
+                reject(err);
             else {
                 Polly = new AWS.Polly({
                     signatureVersion: 'v4',
-                    region: 'us-east-1',
+                    region: 'us-east-1', 
                 });
+                
                 resolve();
             }
         })
     })
 }
 
-/* Returns the list of voices that are available for use when requesting speech synthesis. 
-Displayed languages are those within the specified language code. 
-If no language code is specified, voices for all available languages are displayed. */
 
-
+/**
+ * Get available voices for a given language code
+ * @param languageId Language code. 
+ * @resolve A list of voices with their properties.
+ * @reject Error 
+ */
 const getVoices = (languageId) => {
     var voiceParams = {
         LanguageCode: languageId
@@ -40,15 +53,20 @@ const getVoices = (languageId) => {
     return new Promise((resolve, reject) => {
         Polly.describeVoices(voiceParams, function (err, data) {
             if (err)
-            reject(err, err.stack); // an error occurred
+                reject(err, err.stack); // an error occurred
             else
-            // Voices : A list of voices with their properties.
-            // Type: Array of Voice objects
-            resolve(data.Voices)
+                resolve(data.Voices)
         })
     })
 }
 
+/**
+ * Synthesize speech request
+ * @param params Polly parameters: Text, OutputFormat, VoiceId
+ * @param fileName A name for the audio file to be generated.
+ * @resolve file path of the local generated audio file 
+ * @reject Error 
+ */
 const generateAudio = (params, fileName) => {
     return new Promise((resolve, reject) => {
         Polly.synthesizeSpeech(params, (err, data) => {
@@ -56,12 +74,13 @@ const generateAudio = (params, fileName) => {
                 reject(err.code)
             } else if (data) {
                 if (data.AudioStream instanceof Buffer) {
+                    // path to store audio file
                     const filePath = fileName + '.mp3';
                     Fs.writeFile('./' + filePath, data.AudioStream, function (err) {
                         if (err)
-                        reject(err)
+                            reject(err)
                         else
-                        resolve(filePath)
+                            resolve(filePath)
                     })
                 }
             }
@@ -74,10 +93,3 @@ module.exports = {
     getVoices: getVoices,
     generateAudio: generateAudio
 }
-
-
-
-//Optional language code for the Synthesize Speech request
-// Input text to synthesize. 
-
-//describeVoices Returns the list of voices that are available for use when requesting speech synthesis

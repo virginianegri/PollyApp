@@ -6,7 +6,7 @@ const figlet = require('figlet');
 const uploadFile = require('./dropbox');
 
 const { authenticate, getVoices, generateAudio } = require('./polly');
-const { restartQuestion ,authQuestions, pollyQuestions } = require('./questions');
+const { restartQuestion, authQuestions, pollyQuestions } = require('./questions');
 
 let config = {
     aws_pool_id: '',
@@ -25,7 +25,8 @@ const checkCredentials = () => {
             else {
                 let data = Fs.readFileSync('./config.json');
                 config = JSON.parse(data);
-                console.log(config);
+
+                // console.log("config.aws_pool_id", config);
                 if (config.aws_pool_id == null || config.dropbox_key == null) {
                     askCredentials().then(() => {
                         resolve();
@@ -40,72 +41,35 @@ const checkCredentials = () => {
     })
 }
 
+// Initial prompt interface
 clear();
-
 console.log(
     chalk.blue(
         figlet.textSync('Text-to-Speech Interactive Command Line Tool',
-            { horizontalLayout: 'default', font: 'digital' })
-    )
-    , '\n');
+            {
+                horizontalLayout: 'default',
+                font: 'digital'
+            })), '\n');
 
 checkCredentials().then(() => {
 
     authenticate(config.aws_pool_id).then(() => {
-        console.log('Authenticated!', '\n');
+        console.info('Authenticated!', '\n');
 
-        inquirer.prompt([
+        // Ask for the language for the speech synthesis 
+        const question = [
             {
                 type: 'list',
                 name: 'language_id',
                 message: "Choose a language for speech",
                 choices: ["en-US", "es-ES", "es-MX", "es-US", "fr-CA", "fr-FR", "is-IS", "it-IT"]
             }
-        ])
-            .then(answers => {
-                getVoices(answers.language_id).then((allVoices) => {
-                    let voices = [];
-                    allVoices.map(
-                        v => voices.push(v.Id.concat(' (Gender: ', v.Gender, ' - Engines: ', v.SupportedEngines, ')'))
-                    );
+        ]
 
-                    const questions = pollyQuestions(voices);
-
-                    inquirer.prompt(questions).then(answers => {
-                        console.log(JSON.stringify(answers, null, '\n'));
-
-                        readFile(answers['text_path']).then((text) => {
-                            let params = {
-                                'Text': text,
-                                'OutputFormat': 'mp3',
-                                'VoiceId': answers['voice_id'].split(' (')[0]
-                            }
-
-                            generateAudio(params, answers['file_name']).then((filePath) => {
-                                uploadFile(config.dropbox_key, './' + filePath, '/' + answers['destination_folder'] + '/' + filePath)
-                                    .then(() => {
-                                        console.log("File saved!");
-                                        inquirer.prompt(restartQuestion).then(answers => {
-                                            if (answers['confirm'] == true) {
-                                                startAudioProcess();
-                                            }
-                                        });
-                                    }, err => {
-                                        if (err.code == 401) {
-                                            //Authorization problem
-                                            console.log("Dropbox Auth Problem");
-                                        }
-                                    })
-                            }, err => {
-                                console.log(err)
-                            })
-                        }, err => {
-                            console.log(err);
-                        })
-                    })
-                })
-
-            });
+        inquirer.prompt(question).then(answers => {
+            config.language_id = answers['language_id'];
+            startAudioProcess();
+        });
     }, err => {
         console.log(err);
     })
@@ -135,7 +99,7 @@ const askCredentials = () => {
 
 const startAudioProcess = () => {
 
-    getVoices().then((allVoices) => {
+    getVoices(config.language_id).then((allVoices) => {
         let voices = [];
         allVoices.map(v => voices.push(v.Id));
 
@@ -176,23 +140,19 @@ const startAudioProcess = () => {
         })
     })
 }
-
+/**
+ * Get the content of a file
+ * @param path A path to the input text to synthesize.
+ * @resolve The file's content as string
+ * @reject Error 'file not found'.
+ */
 const readFile = (path) => {
     return new Promise((resolve, reject) => {
         Fs.readFile(path, (err, data) => {
             if (err)
-                reject('File Not Found');
+                reject('File Not Found\n');
             else
                 resolve(data.toString());
         });
     })
 }
-
-// AWS.config.getCredentials(function (err) {
-//     if (err) console.log(err.stack);
-//     // credentials not loaded
-//     else {
-//         console.log("Access key:", AWS.config.credentials.accessKeyId);
-//         console.log("Secret access key:", AWS.config.credentials.secretAccessKey);
-//     }
-// });

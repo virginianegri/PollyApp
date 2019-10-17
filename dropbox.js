@@ -2,8 +2,7 @@ const dropboxV2Api = require('dropbox-v2-api');
 const Fs = require('fs');
 
 module.exports = uploadFile = (token, pathToFile, pathToUpload) => {
-  console.log(pathToUpload);
-  // create session ref:
+  // create session
   const dropbox = dropboxV2Api.authenticate({
     token: token
   });
@@ -18,11 +17,11 @@ module.exports = uploadFile = (token, pathToFile, pathToUpload) => {
       readStream: Fs.createReadStream(pathToFile)
     }, (err, result, response) => {
       //upload completed
-      if (err){
+      if (err) {
         console.log(err);
         reject(err);
       }
-      else{
+      else {
         console.log(result);
         resolve();
       }
