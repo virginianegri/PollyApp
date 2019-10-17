@@ -7,11 +7,11 @@ let Polly;
 
 const authenticate = () => {
     console.log("Authenticating...");
-
+    
     AWS.config.credentials = new AWS.CognitoIdentityCredentials({
         IdentityPoolId: 'us-east-1:7bed0a02-3ef1-473e-9b9f-b4860fd67f85'
     });
-
+    
     return new Promise((resolve, reject) => {
         AWS.config.credentials.get((err) => {
             if (err) reject(err);
@@ -26,17 +26,24 @@ const authenticate = () => {
     })
 }
 
-var voiceParams = {
-    LanguageCode: "en-US"
-};
+/* Returns the list of voices that are available for use when requesting speech synthesis. 
+Displayed languages are those within the specified language code. 
+If no language code is specified, voices for all available languages are displayed. */
 
-const getVoices = () => {
+
+const getVoices = (languageId) => {
+    var voiceParams = {
+        LanguageCode: languageId
+    };
+
     return new Promise((resolve, reject) => {
         Polly.describeVoices(voiceParams, function (err, data) {
             if (err)
-                reject(err, err.stack); // an error occurred
+            reject(err, err.stack); // an error occurred
             else
-                resolve(data.Voices)
+            // Voices : A list of voices with their properties.
+            // Type: Array of Voice objects
+            resolve(data.Voices)
         })
     })
 }
@@ -51,9 +58,9 @@ const generateAudio = (params, fileName) => {
                     const filePath = fileName + '.mp3';
                     Fs.writeFile("./" + filePath, data.AudioStream, function (err) {
                         if (err)
-                            reject(err)
+                        reject(err)
                         else
-                            resolve(filePath)
+                        resolve(filePath)
                     })
                 }
             }
@@ -66,3 +73,10 @@ module.exports = {
     getVoices: getVoices,
     generateAudio: generateAudio
 }
+
+
+
+//Optional language code for the Synthesize Speech request
+// Input text to synthesize. 
+
+//describeVoices Returns the list of voices that are available for use when requesting speech synthesis

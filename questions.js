@@ -34,5 +34,5 @@ const getPollyQuestions = (choices) => {
 }
 
 module.exports = {
-    pollyQuestions : getPollyQuestions,
+    pollyQuestions: getPollyQuestions
 }
