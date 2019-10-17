@@ -1,9 +1,7 @@
 const dropboxV2Api = require('dropbox-v2-api');
-const fs = require('fs');
+const Fs = require('fs');
 
 module.exports = uploadFile = (token, pathToFile, pathToUpload) => {
-  //console.log(pathToFile);
-  //console.log(pathToUpload);
   // create session ref:
   const dropbox = dropboxV2Api.authenticate({
     token: token
@@ -15,10 +13,13 @@ module.exports = uploadFile = (token, pathToFile, pathToUpload) => {
       path: pathToUpload,
       mode: "overwrite"
     },
-    readStream: fs.createReadStream(pathToFile)
+    readStream: Fs.createReadStream(pathToFile)
   }, (err, result, response) => {
     //upload completed
-    console.log(result);
+    if (err)
+      console.log(err);
+    else
+      console.log(result);
   });
 }
 

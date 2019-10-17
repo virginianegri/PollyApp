@@ -1,3 +1,16 @@
+const authQuestions = [
+    {
+        type: 'input',
+        name: 'aws_pool_id',
+        message: "Enter the AWS identity pool id:"
+    },
+    {
+        type: 'input',
+        name: 'dropbox_access_key',
+        message: "Enter the Dropbox access key:"
+    }
+];
+
 let questions2 = [
     {
         type: 'input',
@@ -34,5 +47,6 @@ const getPollyQuestions = (choices) => {
 }
 
 module.exports = {
-    pollyQuestions: getPollyQuestions
+    pollyQuestions : getPollyQuestions,
+    authQuestions: authQuestions
 }
