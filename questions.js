@@ -11,6 +11,15 @@ const authQuestions = [
     }
 ];
 
+const restartQuestion = [
+    {
+        type: 'confirm',
+        name: 'confirm',
+        message: 'Would you like to create more audio files?',
+        default: false
+    }
+]
+
 let questions2 = [
     {
         type: 'input',
@@ -30,7 +39,7 @@ let questions2 = [
         name: 'destination_folder',
         message: "Enter name of the folder you want to put the audio file",
         default: () => {
-            return '/dropbox/';
+            return 'root';
         }
     },
     {
@@ -42,11 +51,12 @@ let questions2 = [
 ];
 
 const getPollyQuestions = (choices) => {
-    questions2[questions2.length-1].choices = choices;
+    questions2[questions2.length - 1].choices = choices;
     return questions2;
 }
 
 module.exports = {
-    pollyQuestions : getPollyQuestions,
-    authQuestions: authQuestions
+    pollyQuestions: getPollyQuestions,
+    authQuestions: authQuestions,
+    restartQuestion: restartQuestion
 }
