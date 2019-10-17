@@ -5,11 +5,12 @@ AWS.config.region = 'us-east-1';
 
 let Polly;
 
-const authenticate = () => {
+const authenticate = (poolId) => {
     console.log("Authenticating...");
 
     AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-        IdentityPoolId: 'us-east-1:7bed0a02-3ef1-473e-9b9f-b4860fd67f85'
+        IdentityPoolId: poolId
+        //IdentityPoolId: 'us-east-1:7bed0a02-3ef1-473e-9b9f-b4860fd67f85'
     });
 
     return new Promise((resolve, reject) => {
@@ -49,7 +50,7 @@ const generateAudio = (params, fileName) => {
             } else if (data) {
                 if (data.AudioStream instanceof Buffer) {
                     const filePath = fileName + '.mp3';
-                    Fs.writeFile("./" + filePath, data.AudioStream, function (err) {
+                    Fs.writeFile('./' + filePath, data.AudioStream, function (err) {
                         if (err)
                             reject(err)
                         else
