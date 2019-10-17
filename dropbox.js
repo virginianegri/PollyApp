@@ -2,7 +2,7 @@ const dropboxV2Api = require('dropbox-v2-api');
 const Fs = require('fs');
 
 module.exports = uploadFile = (token, pathToFile, pathToUpload) => {
-  // create session ref:
+  // create session
   const dropbox = dropboxV2Api.authenticate({
     token: token
   });
@@ -22,5 +22,3 @@ module.exports = uploadFile = (token, pathToFile, pathToUpload) => {
       console.log(result);
   });
 }
-
-

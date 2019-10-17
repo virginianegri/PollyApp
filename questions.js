@@ -11,7 +11,7 @@ const authQuestions = [
     }
 ];
 
-let questions2 = [
+let synthesizeQuestions = [
     {
         type: 'input',
         name: 'text_path',
@@ -42,8 +42,8 @@ let questions2 = [
 ];
 
 const getPollyQuestions = (choices) => {
-    questions2[questions2.length-1].choices = choices;
-    return questions2;
+    synthesizeQuestions[synthesizeQuestions.length-1].choices = choices;
+    return synthesizeQuestions;
 }
 
 module.exports = {
