@@ -5,16 +5,14 @@ const clear = require('clear');
 const figlet = require('figlet');
 const uploadFile = require('./dropbox');
 
-const { authenticate, getLanguages, getVoices, generateAudio } = require('./polly');
+const { authenticate, getLanguages, getLanguageCodes, getVoices, generateAudio } = require('./polly');
 const { languageQuestion, restartQuestion, authQuestions, pollyQuestions } = require('./questions');
 
 let config = {
     aws_pool_id: '',
-    dropbox_key: '', 
+    dropbox_key: '',
     language_id: ''
 }
-
-let languages = [];
 
 const checkCredentials = () => {
     return new Promise((resolve) => {
@@ -55,9 +53,9 @@ console.log(
             })), '\n');
 
 checkCredentials().then(() => {
-    authenticate(config.aws_pool_id).then(() => {
+    authenticate(config, config.aws_pool_id).then(() => {
         console.info('Authenticated!', '\n');
-        
+
         startAudioProcess();
     }, err => {
         console.log(err);
@@ -81,32 +79,22 @@ const askCredentials = () => {
     })
 }
 
- /**
- * Start the audio generation process
- * Structured to be called from different parts of the application.
- * @param questions Questions to be asked
- * @return 
- */
+/**
+* Start the audio generation process
+* Structured to be called from different parts of the application.
+* @param questions Questions to be asked
+* @return 
+*/
 const startAudioProcess = () => {
-    getLanguages().then((allLanguages) => {
-        
-        // Fill in choices for languages
-        allLanguages.map(            
-            l => {
-                if(languages.indexOf(l.LanguageCode) == -1){
-                    languageQuestion[0].choices.push(l.LanguageCode)
-                }
-            } 
-        );
-
-        // Launch the prompt interface 
-        inquirer.prompt(languageQuestion).then(answers => {
-            config.language_id = answers['language_id'];
-            displayQuestions();
-        });
-    })
-
-
+    const allLanguages = getLanguageCodes();
+    allLanguages.map(l => {
+        languageQuestion[0].choices.push(l);
+    });
+    // Launch the prompt interface 
+    inquirer.prompt(languageQuestion).then(answers => {
+        config.language_id = answers['language_id'];
+        displayQuestions();
+    });
 }
 /**
  * Get the content of a file
@@ -127,51 +115,47 @@ const readFile = (path) => {
 
 
 const displayQuestions = () => {
+    
+    // Get all voices with given languageCode
+    let allVoices = getVoices(config.language_id);
+    // Fill in choices for voices
+    let voices = [];
+    allVoices.map(
+        v => voices.push(v.Id.concat(' (Gender: ', v.Gender, ' - Engines: ', v.SupportedEngines, ')'))
+    );
 
-    getVoices(config.language_id).then((allVoices) => {
+    const questions = pollyQuestions(voices);
 
-        // Fill in choices for voices
-        let voices = [];
-        allVoices.map(
-            v => voices.push(v.Id.concat(' (Gender: ', v.Gender , ' - Engines: ', v.SupportedEngines, ')'))
-        );
+    // Launch the prompt interface 
+    inquirer.prompt(questions).then(answers => {
+        readFile(answers['text_path']).then((text) => {
+            let params = {
+                'Text': text,
+                'OutputFormat': 'mp3',
+                'VoiceId': answers['voice_id'].split(' (')[0]
+            }
 
-        const questions = pollyQuestions(voices);
+            generateAudio(params, answers['file_name']).then((filePath) => {
+                uploadFile(config.dropbox_key, './' + filePath, '/' + answers['destination_folder'] + '/' + filePath)
+                    .then(() => {
+                        console.log(chalk.green.bold(`\n File saved!. \n`));
 
-        // Launch the prompt interface 
-        inquirer.prompt(questions).then(answers => {
-            //console.log(JSON.stringify(answers, null, ' '));
-
-            readFile(answers['text_path']).then((text) => {
-                let params = {
-                    'Text': text,
-                    'OutputFormat': 'mp3',
-                    'VoiceId': answers['voice_id'].split(' (')[0]
-                }
-
-                generateAudio(params, answers['file_name']).then((filePath) => {
-                    uploadFile(config.dropbox_key, './' + filePath, '/' + answers['destination_folder'] + '/' + filePath)
-                        .then(() => {
-                            console.log(chalk.green.bold(`\n File saved!. \n`));     
-                            
-                            inquirer.prompt(restartQuestion).then(answers => {
-                                if (answers['confirm'] == true) {
-                                    startAudioProcess();
-                                }
-                            });
-                        }, err => {
-                            if (err.code == 401) {
-                                //Authorization problem
-                                console.log(chalk.red.bold(`\n Dropbox auth problem. \n`));     
+                        inquirer.prompt(restartQuestion).then(answers => {
+                            if (answers['confirm'] == true) {
+                                startAudioProcess();
                             }
-                        })
-                }, err => {
-                    console.log(err)
-                })
+                        });
+                    }, err => {
+                        if (err.code == 401) {
+                            //Authorization problem
+                            console.log(chalk.red.bold(`\n Dropbox auth problem. \n`));
+                        }
+                    })
             }, err => {
-                console.log(err);
+                console.log(err)
             })
+        }, err => {
+            console.log(err);
         })
     })
-
 }
