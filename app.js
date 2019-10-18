@@ -5,13 +5,16 @@ const clear = require('clear');
 const figlet = require('figlet');
 const uploadFile = require('./dropbox');
 
-const { authenticate, getVoices, generateAudio } = require('./polly');
+const { authenticate, getLanguages, getVoices, generateAudio } = require('./polly');
 const { languageQuestion, restartQuestion, authQuestions, pollyQuestions } = require('./questions');
 
 let config = {
     aws_pool_id: '',
-    dropbox_key: ''
+    dropbox_key: '', 
+    language_id: ''
 }
+
+let languages = [];
 
 const checkCredentials = () => {
     return new Promise((resolve) => {
@@ -54,13 +57,8 @@ console.log(
 checkCredentials().then(() => {
     authenticate(config.aws_pool_id).then(() => {
         console.info('Authenticated!', '\n');
-
-        // Launch the prompt interface 
-        inquirer.prompt(languageQuestion).then(answers => {
-            config.language_id = answers['language_id'];
-            startAudioProcess();
-
-        });
+        
+        startAudioProcess();
     }, err => {
         console.log(err);
     })
@@ -83,11 +81,52 @@ const askCredentials = () => {
     })
 }
 
-/**
+ /**
  * Start the audio generation process
  * Structured to be called from different parts of the application.
+ * @param questions Questions to be asked
+ * @return 
  */
 const startAudioProcess = () => {
+    getLanguages().then((allLanguages) => {
+        
+        // Fill in choices for languages
+        allLanguages.map(            
+            l => {
+                if(languages.indexOf(l.LanguageCode) == -1){
+                    languageQuestion[0].choices.push(l.LanguageCode)
+                }
+            } 
+        );
+
+        // Launch the prompt interface 
+        inquirer.prompt(languageQuestion).then(answers => {
+            config.language_id = answers['language_id'];
+            displayQuestions();
+        });
+    })
+
+
+}
+/**
+ * Get the content of a file
+ * @param path A path to the input text to synthesize.
+ * @resolve The file's content as string
+ * @reject Error 'file not found'.
+ */
+const readFile = (path) => {
+    return new Promise((resolve, reject) => {
+        Fs.readFile(path, (err, data) => {
+            if (err)
+                reject('File not found');
+            else
+                resolve(data.toString());
+        });
+    })
+}
+
+
+const displayQuestions = () => {
 
     getVoices(config.language_id).then((allVoices) => {
 
@@ -101,7 +140,6 @@ const startAudioProcess = () => {
 
         // Launch the prompt interface 
         inquirer.prompt(questions).then(answers => {
-            //console.log(answers);
             //console.log(JSON.stringify(answers, null, ' '));
 
             readFile(answers['text_path']).then((text) => {
@@ -135,53 +173,5 @@ const startAudioProcess = () => {
             })
         })
     })
-}
-/**
- * Get the content of a file
- * @param path A path to the input text to synthesize.
- * @resolve The file's content as string
- * @reject Error 'file not found'.
- */
-const readFile = (path) => {
-    return new Promise((resolve, reject) => {
-        Fs.readFile(path, (err, data) => {
-            if (err)
-                reject('File not found');
-            else
-                resolve(data.toString());
-        });
-    })
-}
 
-/**
- * Display prompt with questions
- * @param questions Questions to be asked
- * @return 
- */
-const displayQuestions = (questions) => {
-    inquirer.prompt(questions).then(answers => {
-        // console.log(JSON.stringify(answers, null, '\n'));
-
-        readFile(answers['text_path'])
-            .then((text) => {
-                let params = {
-                    'Text': text,
-                    'OutputFormat': 'mp3',
-                    'VoiceId': answers['voice_id'].split(' (')[0]
-                }
-                
-                // Generate audio file
-                generateAudio(params, answers['file_name']).then((filePath) => {
-                    // Upload to dropbox the audio file stored locally
-                    // uploadFile(config.dropbox_key, './' + filePath, '/' + answers['destination_folder'] + '/' + filePath)
-
-                    //TODO: Ask whether to remove local file or not
-                }, err => {
-                    console.log(chalk.red.bold(`\n ${err}. Invalid parameters. \n`));                    
-                })
-        }, err => {
-            console.log(chalk.red.bold(`\n ${err}. "${answers.text_path}" is not a valid path. \n`));
-            // TODO: reload questions
-        })
-    })
 }

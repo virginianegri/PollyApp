@@ -20,12 +20,12 @@ const restartQuestion = [
     }
 ]
 
-const languageQuestion = [
+let languageQuestion = [
     {
         type: 'list',
         name: 'language_id',
         message: "Choose a language for speech",
-        choices: ["en-US", "es-ES", "es-MX", "es-US", "fr-CA", "fr-FR", "is-IS", "it-IT"]
+        choices: []
     }
 ]
 

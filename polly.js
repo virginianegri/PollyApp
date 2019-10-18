@@ -38,6 +38,21 @@ const authenticate = (poolId) => {
     })
 }
 
+/**
+ * Get available languages
+ */
+const getLanguages = () => {
+
+    return new Promise((resolve, reject) => {
+        Polly.describeVoices(function (err, data) {
+            if (err)
+                reject(err, err.stack); // an error occurred
+            else
+                resolve(data.Voices)
+        })
+    })
+}
+
 
 /**
  * Get available voices for a given language code
@@ -91,6 +106,7 @@ const generateAudio = (params, fileName) => {
 
 module.exports = {
     authenticate: authenticate,
+    getLanguages: getLanguages,
     getVoices: getVoices,
     generateAudio: generateAudio
 }
