@@ -31,7 +31,7 @@ const authenticate = (poolId) => {
                     signatureVersion: 'v4',
                     region: 'us-east-1', 
                 });
-                
+
                 resolve();
             }
         })
@@ -71,7 +71,8 @@ const generateAudio = (params, fileName) => {
     return new Promise((resolve, reject) => {
         Polly.synthesizeSpeech(params, (err, data) => {
             if (err) {
-                reject(err.code)
+                reject(err.code);
+                
             } else if (data) {
                 if (data.AudioStream instanceof Buffer) {
                     // path to store audio file

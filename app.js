@@ -46,7 +46,7 @@ const checkCredentials = () => {
 clear();
 console.log(
     chalk.blue(
-        figlet.textSync('Text-to-Speech Interactive Command Line Tool', { horizontalLayout: 'default', font: 'digital' })
+        figlet.textSync('Text-to-Speech Interactive Command-line Tool', { horizontalLayout: 'default', font: 'digital' })
     )
 , '\n');
 
@@ -60,14 +60,14 @@ checkCredentials().then(() => {
             {
                 type: 'list',
                 name: 'language_id',
-                message: "Choose a language for speech",
-                choices: ["en-US", "es-ES", "es-MX", "es-US", "fr-CA", "fr-FR", "is-IS", "it-IT"]
+                message: 'Choose a language for speech',
+                choices: ['en-US', 'en-IN', 'es-MX', 'tr-TR', 'ru-RU', 'ro-RO', 'pt-PT', 'pl-PL', 'nl-NL', 'it-IT', 'is-IS', 'fr-FR', 
+                    'es-ES', 'de-DE', 'ko-KR', 'en-GB-WLS', 'hi-IN', 'arb', 'cy-GB', 'cmn-CN', 'da-DK', 'en-AU', 'pt-BR', 'nb-NO', 'sv-SE', 'ja-JP', 'es-US', 'fr-CA', 'en-GB']
             }
         ]
 
         // Launch the prompt interface 
         inquirer.prompt(question).then(answers => {
-            
             getVoices(answers.language_id).then((allVoices) => {
                 
                 // Fill up voices for voice_id question
@@ -77,30 +77,7 @@ checkCredentials().then(() => {
                 );
                 
                 const questions = pollyQuestions(voices);
-                
-                inquirer.prompt(questions).then(answers => {
-                    // console.log(JSON.stringify(answers, null, '\n'));
-
-                    readFile(answers['text_path']).then((text) => {
-                        let params = {
-                            'Text': text,
-                            'OutputFormat': 'mp3',
-                            'VoiceId': answers['voice_id'].split(' (')[0]
-                        }
-                        
-                        // Generate audio file
-                        generateAudio(params, answers['file_name']).then((filePath) => {
-                            // Upload to dropbox the audio file stored locally
-                            // uploadFile(config.dropbox_key, './' + filePath, '/' + answers['destination_folder'] + '/' + filePath)
-
-                            //TODO: Ask whether to remove local file or not
-                        }, err => {
-                            console.log(err)
-                        })
-                    }, err => {
-                        console.log(err);
-                    })
-                })
+                displayQuestions(questions);  
             })
 
         });
@@ -124,9 +101,42 @@ const readFile = (path) => {
     return new Promise((resolve, reject) => {
         Fs.readFile(path, (err, data) => {
             if (err)
-                reject('File Not Found\n');
+                reject('File not found');
             else
                 resolve(data.toString());
         });
+    })
+}
+
+/**
+ * Display prompt with questions
+ * @param questions Questions to be asked
+ * @return 
+ */
+const displayQuestions = (questions) => {
+    inquirer.prompt(questions).then(answers => {
+        // console.log(JSON.stringify(answers, null, '\n'));
+
+        readFile(answers['text_path'])
+            .then((text) => {
+                let params = {
+                    'Text': text,
+                    'OutputFormat': 'mp3',
+                    'VoiceId': answers['voice_id'].split(' (')[0]
+                }
+                
+                // Generate audio file
+                generateAudio(params, answers['file_name']).then((filePath) => {
+                    // Upload to dropbox the audio file stored locally
+                    // uploadFile(config.dropbox_key, './' + filePath, '/' + answers['destination_folder'] + '/' + filePath)
+
+                    //TODO: Ask whether to remove local file or not
+                }, err => {
+                    console.log(chalk.red.bold(`\n ${err}. Invalid parameters. \n`));                    
+                })
+        }, err => {
+            console.log(chalk.red.bold(`\n ${err}. "${answers.text_path}" is not a valid path. \n`));
+            // TODO: reload questions
+        })
     })
 }
