@@ -11,6 +11,24 @@ const authQuestions = [
     }
 ];
 
+const restartQuestion = [
+    {
+        type: 'confirm',
+        name: 'confirm',
+        message: 'Would you like to create more audio files?',
+        default: false
+    }
+]
+
+const languageQuestion = [
+    {
+        type: 'list',
+        name: 'language_id',
+        message: "Choose a language for speech",
+        choices: ["en-US", "es-ES", "es-MX", "es-US", "fr-CA", "fr-FR", "is-IS", "it-IT"]
+    }
+]
+
 let synthesizeQuestions = [
     {
         type: 'input',
@@ -30,7 +48,7 @@ let synthesizeQuestions = [
         name: 'destination_folder',
         message: "Enter name of the folder you want to put the audio file",
         default: () => {
-            return '/dropbox/';
+            return 'root';
         }
     },
     {
@@ -47,6 +65,8 @@ const getPollyQuestions = (choices) => {
 }
 
 module.exports = {
-    pollyQuestions : getPollyQuestions,
-    authQuestions: authQuestions
+    pollyQuestions: getPollyQuestions,
+    languageQuestion: languageQuestion,
+    authQuestions: authQuestions,
+    restartQuestion: restartQuestion
 }
