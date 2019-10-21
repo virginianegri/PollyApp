@@ -14,7 +14,7 @@ const authQuestions = [
 const restartQuestion = [
     {
         type: 'confirm',
-        name: 'confirm',
+        name: 'confirm_restart',
         message: 'Would you like to create more audio files?',
         default: false
     }
@@ -24,8 +24,9 @@ let languageQuestion = [
     {
         type: 'list',
         name: 'language_id',
-        message: "Choose a language for speech",
-        choices: []
+        message: 'Choose a language for speech',
+        choices: [],
+        default: ''
     }
 ]
 
