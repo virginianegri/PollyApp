@@ -5,7 +5,7 @@ const clear = require('clear');
 const figlet = require('figlet');
 const uploadFile = require('./dropbox');
 
-const { authenticate, getLanguages, getLanguageCodes, getVoices, generateAudio } = require('./polly');
+const { authenticate, getLanguageCodes, getVoices, generateAudio } = require('./polly');
 const { languageQuestion, restartQuestion, authQuestions, pollyQuestions } = require('./questions');
 
 // Config settings
@@ -18,7 +18,8 @@ let config = {
 // Chalk styles
 const error = chalk.bold.red;
 const success = chalk.bold.green;
-            
+const info = chalk.bold.yellow;
+
 // Initial prompt interface
 clear();
 console.log(
@@ -78,11 +79,9 @@ checkCredentials().then(() => {
 const askCredentials = () => {
     return new Promise((resolve) => {
         inquirer.prompt(authQuestions).then(answers => {
-            let data = Fs.readFileSync('./config.json');
-            config = JSON.parse(data);
 
-            config.aws_pool_id = 'us-east-1:7bed0a02-3ef1-473e-9b9f-b4860fd67f85';
-            config.dropbox_key = 'jlIPA3BaeGwAAAAAAAAALhS9geBr8v32zVqVccWuQpa2tAZeb4HAhL7BFbw9TAR2';
+            config.aws_pool_id = answers['aws_pool_id'];
+            config.dropbox_key = answers['dropbox_access_key'];
 
             data = JSON.stringify(config);
 
@@ -106,9 +105,9 @@ const startAudioProcess = () => {
 
     // Set last chosen language as default 
     languageQuestion[0].default = config.language_id;
-    
+
     // Set language and launch polly quetions
-    inquirer.prompt(languageQuestion).then(answers => {        
+    inquirer.prompt(languageQuestion).then(answers => {
         config.language_id = answers['language_id'];
         displayQuestions();
     });
@@ -123,8 +122,10 @@ const startAudioProcess = () => {
 const readFile = (path) => {
     return new Promise((resolve, reject) => {
         Fs.readFile(path, (err, data) => {
-            if (err)
-                reject(console.log(error('\n File not found! \n')));
+            if (err) {
+                console.log(error('\n File not found! \n'));
+                reject(err);
+            }
             else
                 resolve(data.toString());
         });
@@ -137,13 +138,13 @@ const readFile = (path) => {
 const displayQuestions = () => {
     // Get all voices with given languageCode
     let allVoices = getVoices(config.language_id);
-    
+
     // Fill in choices for voices
     let voices = [];
     allVoices.map(
         v => voices.push(v.Id.concat(' (Gender: ', v.Gender, ' - Engines: ', v.SupportedEngines, ')'))
     );
-    
+
     const questions = pollyQuestions(voices);
 
     // Launch the prompt interface 
@@ -155,18 +156,20 @@ const displayQuestions = () => {
                 'VoiceId': answers['voice_id'].split(' (')[0]
             }
 
+            console.log(info('\n Generating Audio \n'));
             generateAudio(params, answers['file_name']).then((filePath) => {
+                console.log(success('\n Audio Generated! \n'));
                 uploadFile(config.dropbox_key, './' + filePath, '/' + answers['destination_folder'] + '/' + filePath)
                     .then(() => {
                         console.log(success('\n File saved! \n'));
-                        
+
                         console.log(success('\n -------------------------------------------------------------- \n'));
                         inquirer.prompt(restartQuestion).then(answers => {
                             if (answers['confirm_restart'] == true) {
                                 startAudioProcess();
                             }
                         });
-                        
+
                     }, err => {
                         if (err.code == 401) {
                             //Authorization problem
@@ -175,10 +178,13 @@ const displayQuestions = () => {
                     })
             }, err => {
                 console.log(err)
-                
             })
-        }, err => {
-            console.log(err);
+        }, () => {
+            inquirer.prompt(restartQuestion).then(answers => {
+                if (answers['confirm_restart'] == true) {
+                    startAudioProcess();
+                }
+            });
         })
     })
 }

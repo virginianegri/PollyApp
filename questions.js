@@ -47,7 +47,7 @@ let synthesizeQuestions = [
     {
         type: 'input',
         name: 'destination_folder',
-        message: "Enter name of the folder you want to put the audio file",
+        message: "Enter name of the folder you want to put the audio file on cloud",
         default: () => {
             return 'root';
         }

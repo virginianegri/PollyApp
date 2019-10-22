@@ -159,7 +159,6 @@ const generateAudio = (params, fileName) => {
 
 module.exports = {
     authenticate: authenticate,
-    getLanguages: getLanguages,
     getLanguageCodes: getLanguageCodes,
     getVoices: getVoices,
     generateAudio: generateAudio
