@@ -30,7 +30,7 @@ const authenticate = (config, poolId) => {
             // Make the call to obtain credentials
             AWS.config.credentials.get((err) => {
                 if (err)
-                    reject(err);
+                    reject(err.code);
                 else {
                     // Credential retrieval successful, save identityId for future references
                     config.identityId = AWS.config.credentials.params.IdentityId;
@@ -41,11 +41,12 @@ const authenticate = (config, poolId) => {
                         if (err)
                             reject(err);
                         else {
-                            getLanguages().then((allLanguages) => {
-                                // Fill in choices for languages
-                                languages = allLanguages;
-                                resolve();
-                            })
+                            resolve();
+                            // getLanguages().then((allLanguages) => {
+                            //     // Fill in choices for languages
+                            //     languages = allLanguages;
+                            //     resolve();
+                            // })
                         }
                     });
                 }
@@ -64,11 +65,12 @@ const authenticate = (config, poolId) => {
                 else {
                     instantiatePolly();
 
-                    getLanguages().then((allLanguages) => {
-                        // Fill in choices for languages
-                        languages = allLanguages;
-                        resolve();
-                    })
+                    resolve();
+                    // getLanguages().then((allLanguages) => {
+                    //     // Fill in choices for languages
+                    //     languages = allLanguages;
+                    //     resolve();
+                    // })
                 }
             });
         }
@@ -114,7 +116,6 @@ const getLanguageCodes = () => {
     return languageCodes;
 }
 
-
 /**
  * Get available voices for a given language code
  * @param languageCode Language code. 
@@ -135,21 +136,21 @@ const getVoices = (languageCode) => {
  * @resolve file path of the local generated audio file 
  * @reject Error 
  */
-const generateAudio = (params, fileName) => {
+const generateAudio = (params, fileName, audioPath) => {
     return new Promise((resolve, reject) => {
         Polly.synthesizeSpeech(params, (err, data) => {
             if (err) {
-                reject(err.code);
+                reject(err.originalError.code);
 
             } else if (data) {
                 if (data.AudioStream instanceof Buffer) {
                     // path to store audio file
-                    const filePath = fileName + '.mp3';
-                    Fs.writeFile('./' + filePath, data.AudioStream, function (err) {
+                    const filePath = audioPath + '/' + fileName + '.mp3';
+                    Fs.writeFile(filePath, data.AudioStream, (err) => {
                         if (err)
-                            reject(err)
+                            reject('Folder not found: ' + audioPath);
                         else
-                            resolve(filePath)
+                            resolve(filePath);
                     })
                 }
             }

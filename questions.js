@@ -1,13 +1,18 @@
-const authQuestions = [
+const configQuestions = [
     {
         type: 'input',
-        name: 'aws_pool_id',
-        message: "Enter the AWS identity pool id:"
-    },
+        name: 'shared_folder_path',
+        message: 'Enter the shared folder path'
+    }
+];
+
+const audioQuestions = [
     {
-        type: 'input',
-        name: 'dropbox_access_key',
-        message: "Enter the Dropbox access key:"
+        type: 'list',
+        name: 'generate_choice',
+        message: 'Select the type of audio generation',
+        choices: ['Single','All'],
+        default: 'Single'
     }
 ];
 
@@ -20,37 +25,11 @@ const restartQuestion = [
     }
 ]
 
-let languageQuestion = [
-    {
-        type: 'list',
-        name: 'language_id',
-        message: 'Choose a language for speech',
-        choices: [],
-        default: ''
-    }
-]
-
 let synthesizeQuestions = [
     {
         type: 'input',
-        name: 'text_path',
-        message: "Enter the path to the text file"
-    },
-    {
-        type: 'input',
         name: 'file_name',
-        message: "Enter name of the audio file to be created",
-        default: () => {
-            return 'audioFile';
-        }
-    },
-    {
-        type: 'input',
-        name: 'destination_folder',
-        message: "Enter name of the folder you want to put the audio file on cloud",
-        default: () => {
-            return 'root';
-        }
+        message: "Enter the name of the text file"
     },
     {
         type: 'list',
@@ -61,13 +40,13 @@ let synthesizeQuestions = [
 ];
 
 const getPollyQuestions = (choices) => {
-    synthesizeQuestions[synthesizeQuestions.length-1].choices = choices;
+    synthesizeQuestions[synthesizeQuestions.length - 1].choices = choices;
     return synthesizeQuestions;
 }
 
 module.exports = {
     pollyQuestions: getPollyQuestions,
-    languageQuestion: languageQuestion,
-    authQuestions: authQuestions,
-    restartQuestion: restartQuestion
+    configQuestions: configQuestions,
+    restartQuestion: restartQuestion,
+    audioQuestions: audioQuestions
 }

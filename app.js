@@ -3,17 +3,18 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const clear = require('clear');
 const figlet = require('figlet');
-const uploadFile = require('./dropbox');
 
-const { authenticate, getLanguageCodes, getVoices, generateAudio } = require('./polly');
-const { languageQuestion, restartQuestion, authQuestions, pollyQuestions } = require('./questions');
+const { authenticate, generateAudio } = require('./polly');
+const {restartQuestion, configQuestions, pollyQuestions, audioQuestions } = require('./questions');
 
 // Config settings
 let config = {
-    aws_pool_id: '', // aws pool access key
-    dropbox_key: '', // dropbox access key
-    language_id: ''
+    shared_folder_path: ""
 }
+
+let sharedConfig = {
+    aws_pool_id: ""
+};
 
 // Chalk styles
 const error = chalk.bold.red;
@@ -31,57 +32,57 @@ console.log(
             })), '\n');
 
 
-/**
-* Set the access keys aws_pool_id and dropbox_key
-*/
-const checkCredentials = () => {
+const checkConfig = () => {
     return new Promise((resolve) => {
-        Fs.access('./config.json', Fs.F_OK, (err, data) => {
-            if (err) {
-                //File doesn't exist, create file
-                askCredentials().then(() => {
-                    resolve();
-                })
-            }
-            else {
-                let data = Fs.readFileSync('./config.json');
-                config = JSON.parse(data);
+        accessFile('./config.json').then(() => {
+            let data = Fs.readFileSync('./config.json');
+            config = JSON.parse(data);
 
-                // console.log("config.aws_pool_id", config);
-                if (config.aws_pool_id == null || config.dropbox_key == null) {
-                    askCredentials().then(() => {
-                        resolve();
-                    })
-                }
-                else {
-                    resolve();
-                }
-            }
+            const sharedPath = config.shared_folder_path;
 
+            checkSharedConfig(sharedPath).then(() => {
+                resolve();
+            }, err => {
+                console.log(err);
+            })
+        }, err => {
+            //File doesn't exist, create file
+            askConfig().then(() => {
+                const sharedPath = config.shared_folder_path;
+
+                checkSharedConfig(sharedPath).then(() => {
+                    resolve();
+                });
+            })
         })
     })
 }
 
-checkCredentials().then(() => {
-    authenticate(config, config.aws_pool_id).then(() => {
-        console.info('Authenticated!', '\n');
-        startAudioProcess();
-    }, err => {
-        console.info('Authentication error: ', err);
-        reject(console.log(error('\n File not found!. \n')));
-    })
-});
+const checkSharedConfig = (sharedPath) => {
+    const path = sharedPath + '/sharedConfig.json';
 
+    return new Promise((resolve) => {
+        Fs.readFile(path, (err, data) => {
+            if (err) {
+                Fs.unlinkSync('./config.json');
+                error("Path is malformed!");
+                startApp();
+            }
+            else {
+                sharedConfig = JSON.parse(data.toString());
+                resolve();
+            }
+        });
+    })
+}
 
 /**
 * Allow user to set the access keys aws_pool_id and dropbox_key 
 */
-const askCredentials = () => {
+const askConfig = () => {
     return new Promise((resolve) => {
-        inquirer.prompt(authQuestions).then(answers => {
-
-            config.aws_pool_id = answers['aws_pool_id'];
-            config.dropbox_key = answers['dropbox_access_key'];
+        inquirer.prompt(configQuestions).then(answers => {
+            config.shared_folder_path = answers['shared_folder_path'];
 
             data = JSON.stringify(config);
 
@@ -89,28 +90,6 @@ const askCredentials = () => {
             resolve();
         })
     })
-}
-
-
-/**
-* Start the audio generation process
-* Structured to be called from different parts of the application.
-*/
-const startAudioProcess = () => {
-    // Fill in choices in language question
-    const allLanguages = getLanguageCodes();
-    allLanguages.map(l => {
-        languageQuestion[0].choices.push(l);
-    });
-
-    // Set last chosen language as default 
-    languageQuestion[0].default = config.language_id;
-
-    // Set language and launch polly quetions
-    inquirer.prompt(languageQuestion).then(answers => {
-        config.language_id = answers['language_id'];
-        displayQuestions();
-    });
 }
 
 /**
@@ -124,6 +103,7 @@ const readFile = (path) => {
         Fs.readFile(path, (err, data) => {
             if (err) {
                 console.log(error('\n File not found! \n'));
+                console.log(error('Path: ' + path));
                 reject(err);
             }
             else
@@ -133,56 +113,87 @@ const readFile = (path) => {
 }
 
 /**
+ * Check if a file exists with the given path
+ * @param path A path to the file.
+ * @resolve File exists.
+ * @reject Error 'file not found'.
+ */
+const accessFile = (path) => {
+    return new Promise((resolve, reject) => {
+        Fs.access(path, Fs.F_OK, (err) => {
+            if (err) {
+                console.log(error('\n File not found! \n'));
+                reject(err);
+            }
+            else
+                resolve();
+        });
+    })
+}
+
+const startApp = () => {
+    checkConfig().then(() => {
+        authenticate(config, sharedConfig.aws_pool_id).then(() => {
+            console.info('Authenticated!', '\n');
+            inquirer.prompt(audioQuestions).then((answers)=>{
+                if(answers['generate_choice'] == 'Single'){
+                    displayQuestions();
+                }
+                else{
+                    //Generate all audio files
+                }
+            })
+        }, err => {
+            console.info('Authentication error: ', err.originalError.code);
+        })
+    });
+}
+
+startApp();
+
+/**
  * Set polly params for speech synthesis
  */
 const displayQuestions = () => {
-    // Get all voices with given languageCode
-    let allVoices = getVoices(config.language_id);
+    
+    // Get all voices from shared config file
+    let allVoices = sharedConfig.voice_ids;
 
     // Fill in choices for voices
     let voices = [];
-    allVoices.map(
-        v => voices.push(v.Id.concat(' (Gender: ', v.Gender, ' - Engines: ', v.SupportedEngines, ')'))
-    );
+    allVoices.map(v => voices.push(v));
 
     const questions = pollyQuestions(voices);
 
     // Launch the prompt interface 
     inquirer.prompt(questions).then(answers => {
-        readFile(answers['text_path']).then((text) => {
+
+        const sharedPath = config.shared_folder_path;
+        const filePath = sharedPath + '/' + sharedConfig.text_folder + '/' + answers['file_name'] + '.txt';
+        const audioPath = sharedPath + '/' + sharedConfig.audio_folder;
+
+        readFile(filePath).then((text) => {
             let params = {
                 'Text': text,
                 'OutputFormat': 'mp3',
-                'VoiceId': answers['voice_id'].split(' (')[0]
+                'VoiceId': answers['voice_id']
             }
 
             console.log(info('\n Generating Audio \n'));
-            generateAudio(params, answers['file_name']).then((filePath) => {
+            generateAudio(params, answers['file_name'], audioPath).then(() => {
                 console.log(success('\n Audio Generated! \n'));
-                uploadFile(config.dropbox_key, './' + filePath, '/' + answers['destination_folder'] + '/' + filePath)
-                    .then(() => {
-                        console.log(success('\n File saved! \n'));
-
-                        console.log(success('\n -------------------------------------------------------------- \n'));
-                        inquirer.prompt(restartQuestion).then(answers => {
-                            if (answers['confirm_restart'] == true) {
-                                startAudioProcess();
-                            }
-                        });
-
-                    }, err => {
-                        if (err.code == 401) {
-                            //Authorization problem
-                            console.log(error('\n Dropbox auth problem. \n'));
-                        }
-                    })
+                inquirer.prompt(restartQuestion).then(answers => {
+                    if (answers['confirm_restart'] == true) {
+                        displayQuestions();
+                    }
+                });
             }, err => {
-                console.log(err)
+                console.info('Audio generation error: ', err);
             })
         }, () => {
             inquirer.prompt(restartQuestion).then(answers => {
                 if (answers['confirm_restart'] == true) {
-                    startAudioProcess();
+                    displayQuestions();
                 }
             });
         })
