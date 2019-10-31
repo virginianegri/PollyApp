@@ -25,27 +25,16 @@ const restartQuestion = [
     }
 ]
 
-let synthesizeQuestions = [
+const synthesizeQuestion = [
     {
         type: 'input',
         name: 'file_name',
         message: "Enter the name of the text file"
-    },
-    {
-        type: 'list',
-        name: 'voice_id',
-        message: "Choose a voice for speech",
-        choices: []
     }
 ];
 
-const getPollyQuestions = (choices) => {
-    synthesizeQuestions[synthesizeQuestions.length - 1].choices = choices;
-    return synthesizeQuestions;
-}
-
 module.exports = {
-    pollyQuestions: getPollyQuestions,
+    pollyQuestion: synthesizeQuestion,
     configQuestions: configQuestions,
     restartQuestion: restartQuestion,
     audioQuestions: audioQuestions

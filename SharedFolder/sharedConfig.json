@@ -2,5 +2,6 @@
     "aws_pool_id": "us-east-1:7bed0a02-3ef1-473e-9b9f-b4860fd67f85",
     "text_folder": "texts",
     "audio_folder": "audios",
-    "voice_ids": ["Kendra","Joanna"]
+    "default_voice": "Brian",
+    "extra_voice_character": "#"
 }

@@ -5,7 +5,7 @@ const clear = require('clear');
 const figlet = require('figlet');
 
 const { authenticate, generateAudio } = require('./polly');
-const { restartQuestion, configQuestions, pollyQuestions, audioQuestions } = require('./questions');
+const { restartQuestion, configQuestions, pollyQuestion, audioQuestions } = require('./questions');
 
 // Config settings
 let config = {
@@ -40,7 +40,9 @@ console.log(
             })), '\n');
 
 
-
+/**
+ * Checks the local config file and reads the config
+ */
 const checkConfig = () => {
     return new Promise((resolve) => {
         accessFile('./config.json').then(() => {
@@ -67,6 +69,10 @@ const checkConfig = () => {
     })
 }
 
+/**
+ * Checks if there is a shared config present with the path
+ * @param sharedPath path to the shared folder
+ */
 const checkSharedConfig = (sharedPath) => {
     const path = sharedPath + '/sharedConfig.json';
 
@@ -85,7 +91,7 @@ const checkSharedConfig = (sharedPath) => {
     })
 }
 
-/**
+/*
 * Allow user to set the access keys aws_pool_id and dropbox_key 
 */
 const askConfig = () => {
@@ -150,27 +156,32 @@ const startApp = () => {
             config.sharedPath = config.shared_folder_path;
             config.sharedFilePath = config.sharedPath + '/' + sharedConfig.text_folder;
             config.audioPath = config.sharedPath + '/' + sharedConfig.audio_folder;
-            inquirer.prompt(audioQuestions).then((answers) => {
-                if (answers['generate_choice'] == 'Single') {
-                    //Generate single audio file
-                    displayQuestions();
-                }
-                else {
-                    //Generate all audio files
-                    //Set the default voice id for audio generation
-                    pollyParams.VoiceId = sharedConfig.voice_ids[0];
-
-                    //Read all file names in the text directory
-                    const fileNames = Fs.readdirSync(config.sharedFilePath);
-                    //console.log(fileNames);
-
-                    generateAllAudios(fileNames);
-                }
-            })
+            startQuestion();
         }, err => {
             console.info('Authentication error: ', err);
         })
     });
+}
+/**
+ * Asks the user if they want to convert single file or all files to audio 
+ */
+const startQuestion = () => {
+    inquirer.prompt(audioQuestions).then((answers) => {
+        if (answers['generate_choice'] == 'Single') {
+            //Generate single audio file
+            displayQuestions();
+        }
+        else {
+            //Generate all audio files
+            //Set the default voice id for audio generation
+            pollyParams.VoiceId = sharedConfig.default_voice;
+
+            //Read all file names in the text directory
+            const fileNames = Fs.readdirSync(config.sharedFilePath);
+
+            generateAllAudios(fileNames);
+        }
+    })
 }
 
 /**
@@ -182,8 +193,7 @@ const generateAllAudios = async (files) => {
         const fileName = file.split('.')[0];
         const text = await readFile(config.sharedFilePath + '/' + file);
 
-        pollyParams.Text = text;
-        pollyParams.VoiceId = sharedConfig.voice_ids[0];
+        setupPolly(text);
 
         await generateAudio(pollyParams, fileName, config.audioPath).then(() => {
             console.log(success('Audio Generated: ' + fileName + '.mp3 \n'));
@@ -196,9 +206,26 @@ const generateAllAudios = async (files) => {
 
     inquirer.prompt(restartQuestion).then(answers => {
         if (answers['confirm_restart'] == true) {
-            displayQuestions();
+            startQuestion();
         }
     });
+}
+
+/**
+ * Checks if the text has a voice parameter in the beginning
+ * Sets up Polly accordingly
+ * @param text text that is read from the file
+ */
+const setupPolly = (text) => {
+    const includesVoice = text.includes(sharedConfig.extra_voice_character);
+    if (includesVoice == true) {
+        const splitText = text.split(sharedConfig.extra_voice_character);
+        pollyParams.VoiceId = splitText[1];
+        pollyParams.Text = splitText[2];
+    } else {
+        pollyParams.Text = text;
+        pollyParams.VoiceId = sharedConfig.default_voice;
+    }
 }
 
 /**
@@ -206,28 +233,18 @@ const generateAllAudios = async (files) => {
  */
 const displayQuestions = () => {
 
-    // Get all voices from shared config file
-    let allVoices = sharedConfig.voice_ids;
-
-    // Fill in choices for voices
-    let voices = [];
-    allVoices.map(v => voices.push(v));
-
-    const questions = pollyQuestions(voices);
-
     // Launch the prompt interface 
-    inquirer.prompt(questions).then(answers => {
+    inquirer.prompt(pollyQuestion).then(answers => {
         config.filePath = config.sharedFilePath + '/' + answers['file_name'] + '.txt';
 
         readFile(config.filePath).then((text) => {
-            pollyParams.Text = text;
-            pollyParams.VoiceId = answers['voice_id'];
+            setupPolly(text);
 
             generateAudio(pollyParams, answers['file_name'], config.audioPath).then(() => {
                 console.log(success('\n Audio Generated! \n'));
                 inquirer.prompt(restartQuestion).then(answers => {
                     if (answers['confirm_restart'] == true) {
-                        displayQuestions();
+                        startQuestion();
                     }
                 });
             }, err => {
@@ -236,7 +253,7 @@ const displayQuestions = () => {
         }, () => {
             inquirer.prompt(restartQuestion).then(answers => {
                 if (answers['confirm_restart'] == true) {
-                    displayQuestions();
+                    startQuestion();
                 }
             });
         })
