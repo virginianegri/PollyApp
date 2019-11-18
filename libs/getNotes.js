@@ -21,7 +21,7 @@ function getNotes(folderPath) {
             //handling error
             if (err) {
                 console.log('Unable to scan directory: ' + err);
-                reject(e);
+                reject(err);
             }
             //listing all files using forEach
             var count=0;
