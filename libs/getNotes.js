@@ -15,9 +15,9 @@ function getNotes(folderPath) {
     return new Promise((resolve, reject) => {
         let texts=[];
 
-        //joining path of directory 
-        const directoryPath = path.join(__dirname, folderPath);
-        fs.readdir(directoryPath, function (err, files) {
+        // const directoryPath = path.join(__dirname, folderPath); //this wasn't working with moving it libs.
+        //TODO: Need to absolute path from Driver funcation.
+        fs.readdir(folderPath, function (err, files) {
             //handling error
             if (err) {
                 console.log('Unable to scan directory: ' + err);
