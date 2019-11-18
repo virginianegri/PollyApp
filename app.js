@@ -4,7 +4,7 @@ const chalk = require('chalk');
 const clear = require('clear');
 const figlet = require('figlet');
 
-const { authenticate, generateAudio } = require('./polly');
+const { authenticate, generateAudio } = require('./libs//polly');
 const { restartQuestion, configQuestions, pollyQuestion, audioQuestions } = require('./questions');
 
 // Config settings
