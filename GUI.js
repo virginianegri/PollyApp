@@ -1,4 +1,6 @@
 const inquirer = require('inquirer');
+const rimraf = require('rimraf');
+
 const chalk = require('chalk');
 const clear = require('clear');
 const figlet = require('figlet');
@@ -6,7 +8,10 @@ const figlet = require('figlet');
 const { checkConfig } = require('./libs/manageConfig');
 const { authenticate, generateAudio } = require('./libs/polly');
 const { readFile } = require('./libs/readFile');
+// const { removeDir } = require('./libs/removeDir')
 const { getPollyParams } = require('./libs/getPollyParams');
+
+const { processPPTXFile } = require('./libs/processPPTXFile');
 
 const { restartQuestion, pollyQuestion, pollyExtQuestion, audioQuestions, typeQuestions } = require('./libs/questions'); 
 
@@ -53,13 +58,14 @@ async function startApp() {
             questionMap.pollyQuestion.file_name, 
             `${finalConfig.config.shared_folder_path}/${finalConfig.sharedConfig.audio_folder}`)
     }
-    // else if() {
-        
-    // }
+    else if(questionMap.typeQuestion.generate_choice == 'Power Point Presentation' && questionMap.audioQuestion.generate_choice == 'Single') {
+        await processPPTXFile(`${questionMap.pollyQuestion.file_name}.${questionMap.pollyExtQuestion.file_ext}`);
+        // await delay(5000);
+        // await removeDir(`${finalConfig.config.shared_folder_path}/${finalConfig.sharedConfig.pptx_folder}/${questionMap.pollyQuestion.file_name}/`);
+    }
 
     let restart =  await inquirer.prompt(restartQuestion);
     if(restart.confirm_restart)
         startApp();
 }
-
 startApp()
