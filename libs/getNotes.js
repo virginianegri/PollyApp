@@ -10,7 +10,7 @@ const convert = require('xml-js');
  * @sample  getNotes('path/to/xmls')
  */
 
-function getNotes(folderPath) {
+async function getNotes(folderPath) {
     //passsing directoryPath and callback function
     return new Promise((resolve, reject) => {
         let texts=[];

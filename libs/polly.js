@@ -12,9 +12,8 @@ let Polly;
  * @resolve Polly object
  * @reject Error 
  */
-const authenticate = (config, poolId) => {
+async function authenticate (config, poolId) {
     console.log("Authenticating AWS...");
-
     return new Promise((resolve, reject) => {
         if (!config.hasOwnProperty('identityId')) {
             // There is no identity created for this user, create new identity
@@ -91,9 +90,9 @@ const instantiatePolly = () => {
  * @resolve file path of the local generated audio file 
  * @reject Error 
  */
-const generateAudio = (params, fileName, audioPath) => {
-    console.log('\nGenerating Audio');
+async function generateAudio (params, fileName, audioPath) {
     return new Promise((resolve, reject) => {
+        console.log('\nGenerating Audio');
         Polly.synthesizeSpeech(params, (err, data) => {
             if (err) {
                 if (err.hasOwnProperty('originalError')) {

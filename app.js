@@ -3,9 +3,8 @@ const inquirer = require('inquirer');
 const chalk = require('chalk');
 const clear = require('clear');
 const figlet = require('figlet');
-
 const { authenticate, generateAudio } = require('./libs//polly');
-const { restartQuestion, configQuestions, pollyQuestion, audioQuestions } = require('./questions');
+const { restartQuestion, configQuestions, pollyQuestion, pollyPPTXQuestion, audioQuestions, typeQuestions } = require('./libs/questions'); 
 
 // Config settings
 let config = {
@@ -50,6 +49,7 @@ const checkConfig = () => {
             config = JSON.parse(data);
 
             const sharedPath = config.shared_folder_path;
+            console.log('access shared_path: ',sharedPath);
 
             checkSharedConfig(sharedPath).then(() => {
                 resolve();
@@ -60,7 +60,7 @@ const checkConfig = () => {
             //File doesn't exist, create file
             askConfig().then(() => {
                 const sharedPath = config.shared_folder_path;
-
+                console.log('ask shared_path: ',sharedPath);
                 checkSharedConfig(sharedPath).then(() => {
                     resolve();
                 });
@@ -85,6 +85,7 @@ const checkSharedConfig = (sharedPath) => {
             }
             else {
                 sharedConfig = JSON.parse(data.toString());
+                console.log('share:',sharedConfig)
                 resolve();
             }
         });
@@ -154,8 +155,10 @@ const startApp = () => {
         authenticate(config, sharedConfig.aws_pool_id).then(() => {
             console.info('Authenticated!', '\n');
             config.sharedPath = config.shared_folder_path;
-            config.sharedFilePath = config.sharedPath + '/' + sharedConfig.text_folder;
+            config.shareTextFilePath = config.sharedPath + '/' + sharedConfig.text_folder;
+            config.sharePptxFilePath = config.sharedPath + '/' + sharedConfig.pptx_folder;
             config.audioPath = config.sharedPath + '/' + sharedConfig.audio_folder;
+            console.log(config)
             startQuestion();
         }, err => {
             console.info('Authentication error: ', err);
@@ -166,6 +169,35 @@ const startApp = () => {
  * Asks the user if they want to convert single file or all files to audio 
  */
 const startQuestion = () => {
+    inquirer.prompt(typeQuestions).then((answers) => {
+        if (answers['generate_choice'] == 'Text') {
+            //Generate single audio file
+            textAudio();
+        }
+        else {
+            pptxAudio();
+        }
+    })
+}
+const pptxAudio = () => {
+    inquirer.prompt(audioQuestions).then((answers) => {
+        if (answers['generate_choice'] == 'Single') {
+            //Generate single audio file
+            displayQuestionsPPTX();
+        }
+        else {
+            //Generate all audio files
+            //Set the default voice id for audio generation
+            pollyParams.VoiceId = sharedConfig.default_voice;
+
+            //Read all file names in the text directory
+            const fileNames = Fs.readdirSync(config.shareTextFilePath);
+
+            generateAllAudios(fileNames);
+        }
+    })
+}
+const textAudio = () => {
     inquirer.prompt(audioQuestions).then((answers) => {
         if (answers['generate_choice'] == 'Single') {
             //Generate single audio file
@@ -177,12 +209,13 @@ const startQuestion = () => {
             pollyParams.VoiceId = sharedConfig.default_voice;
 
             //Read all file names in the text directory
-            const fileNames = Fs.readdirSync(config.sharedFilePath);
+            const fileNames = Fs.readdirSync(config.shareTextFilePath);
 
             generateAllAudios(fileNames);
         }
     })
 }
+
 
 /**
  * Generates audio for all of the text files present in text folder
@@ -191,7 +224,7 @@ const startQuestion = () => {
 const generateAllAudios = async (files) => {
     for (const file of files) {
         const fileName = file.split('.')[0];
-        const text = await readFile(config.sharedFilePath + '/' + file);
+        const text = await readFile(config.shareTextFilePath + '/' + file);
 
         setupPolly(text);
 
@@ -235,7 +268,41 @@ const displayQuestions = () => {
 
     // Launch the prompt interface 
     inquirer.prompt(pollyQuestion).then(answers => {
-        config.filePath = config.sharedFilePath + '/' + answers['file_name'] + '.txt';
+        config.filePath = config.shareTextFilePath + '/' + answers['file_name'] + '.txt';
+        console.log(config.filePath)
+
+        readFile(config.filePath).then((text) => {
+            setupPolly(text);
+            console.log(pollyParams, answers['file_name'], config.audioPath)
+            generateAudio(pollyParams, answers['file_name'], config.audioPath).then(() => {
+                console.log(success('\n Audio Generated! \n'));
+                inquirer.prompt(restartQuestion).then(answers => {
+                    if (answers['confirm_restart'] == true) {
+                        startQuestion();
+                    }
+                });
+            }, err => {
+                console.info('Audio generation error: ', err);
+            })
+        }, () => {
+            inquirer.prompt(restartQuestion).then(answers => {
+                if (answers['confirm_restart'] == true) {
+                    startQuestion();
+                }
+            });
+        })
+    })
+}
+
+/**
+ * Set polly params for speech synthesis
+ */
+const displayQuestionsPPTX = () => {
+
+    // Launch the prompt interface 
+    inquirer.prompt(pollyPPTXQuestion).then(answers => {
+        config.filePath = config.sharePptxFilePath + '/' + answers['file_name'] + '.pptx';
+        console.log(config.filePath)
 
         readFile(config.filePath).then((text) => {
             setupPolly(text);

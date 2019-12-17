@@ -11,14 +11,14 @@ const compressing = require('compressing');
  * @Sample unzip('/path/to/archive.zip', '/Extract/Path');
  */
 
-const unzip = (sourcePath, destinationPath) => {
-    compressing.zip.uncompress(sourcePath, destinationPath)
-    .then(result =>{
-        return result;
-    })
-    .catch(handleError => {
-        throw new Error(handleError.toString());
-    });
+async function unzip(sourcePath, destinationPath) {
+    await compressing.zip.uncompress(sourcePath, destinationPath);
+    // .then(result =>{
+    //     resolve(result);
+    // })
+    // .catch(handleError => {
+    //     reject(new Error(handleError.toString()));
+    // });
 }
 
 /**
@@ -28,14 +28,14 @@ const unzip = (sourcePath, destinationPath) => {
  * @reject Error 
  * @Sample zipFolder('/path/to/folder', 'path/destincation/archive.zip');
  */
-const zipFolder = (sourcePath, destinationPath) => {
-    compressing.zip.compressDir(sourcePath, destinationPath)
-    .then(result =>{
-        return result;
-    })
-    .catch(handleError => {
-        throw new Error(handleError.toString());
-    });
+async function zipFolder (sourcePath, destinationPath) {
+    await compressing.zip.compressDir(sourcePath, destinationPath)
+    // .then(result =>{
+    //     return result;
+    // })
+    // .catch(handleError => {
+    //     throw new Error(handleError.toString());
+    // });
 }
 
 /**
@@ -45,7 +45,7 @@ const zipFolder = (sourcePath, destinationPath) => {
  * @reject Error 
  * @Sample zipMulti(['/path/to/folder','./path/to/file'],'path/destincation/archive.zip');
  */
-const zipMulti = (sourcePaths, destinationPath) => {
+async function zipMulti (sourcePaths, destinationPath) {
     const zipStream = new compressing.zip.Stream();
     
     sourcePaths.forEach(path => {
@@ -56,4 +56,10 @@ const zipMulti = (sourcePaths, destinationPath) => {
     pump(zipStream, destStream,  function(err) {
         console.log('pipe finished', err)
     });
+}
+
+module.exports = {
+    unzip,
+    zipMulti,
+    zipFolder
 }
