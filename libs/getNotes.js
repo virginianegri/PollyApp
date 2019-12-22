@@ -34,14 +34,16 @@ async function getNotes(folderPath) {
     
                         var xml = require('fs').readFileSync(temp_path, 'utf8');
                         var result = convert.xml2json(xml, {compact: true, spaces: 4});
-                        obj = JSON.parse(result);
-                        text=obj['p:notes']['p:cSld']['p:spTree']['p:sp'][0]['p:txBody']['a:p'][0]['a:r']['a:t']._text;
+                        // obj = JSON.parse(result);
+                        text = result.match(/"_text": [A-Za-z ,."]*/g).toString().replace(`"_text": "`,'').replace(`"`,"");
+                        // text=obj['p:notes']['p:cSld']['p:spTree']['p:sp'][0]['p:txBody']['a:p'][0]['a:r']['a:t']._text;
+                        // console.log(obj['p:notes']['p:cSld']['p:spTree'])//['p:sp'][0]['p:txBody']['a:p'][0]['a:r']['a:t']._text;
                         let slide_number=file.match(/\d+/).toString();
                         texts.push([slide_number,text]);
                     }
                 }
                 catch(e) {
-                    // console.log(e.message);
+                    // console.log(temp_path, e.message);
                     return;
                 }
             });
@@ -50,10 +52,10 @@ async function getNotes(folderPath) {
     }); 
 }
 
+// let test_path = './SharedFolder/pptx/demo 3/ppt/notesSlides/';
+// getNotes(test_path).then((result)=>{
+//     console.log(result);
+// })
 module.exports = {
     getNotes
 }
-
-
-
-
