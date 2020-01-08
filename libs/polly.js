@@ -117,6 +117,34 @@ async function generateAudio (params, fileName, audioPath) {
     })
 }
 
+async function generateAudio (params, fileName, audioPath) {
+    return new Promise((resolve, reject) => {
+        console.log('\nGenerating Audio');
+        Polly.synthesizeSpeech(params, (err, data) => {
+            if (err) {
+                if (err.hasOwnProperty('originalError')) {
+                    reject(err.originalError.code);
+                }
+                else {
+                    reject(err);
+                }
+            } else if (data) {
+                if (data.AudioStream instanceof Buffer) {
+                    // path to store audio file
+                    const filePath = audioPath + '/' + fileName + '.mp3';
+                    Fs.writeFile(filePath, data.AudioStream, (err) => {
+                        if (err)
+                            reject('Folder not found: ' + audioPath);
+                        else
+                            resolve(filePath);
+                    })
+                }
+            }
+        })
+    })
+}
+
+
 module.exports = {
     authenticate: authenticate,
     generateAudio: generateAudio
