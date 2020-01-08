@@ -32,12 +32,12 @@ const argv = require('yargs')
   .argv
 
 async function cli_init(args) {
-  console.log('From require: ', args);
+  // console.log('From require: ', args);
 
   let finalConfig = await checkConfig('./config.json');
 
   await authenticate(finalConfig.config, finalConfig.sharedConfig.aws_pool_id);
-  console.log(args._[0]);
+  // console.log(args._[0]);
 
   if (args._[0] == 'singletext') {
       let filePath = `${finalConfig.config.shared_folder_path}/${finalConfig.sharedConfig.text_folder}/${args.filename}.txt`
