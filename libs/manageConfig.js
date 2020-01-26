@@ -1,7 +1,7 @@
 const Fs = require('fs');
 
 /**
- * Check if a file exists with the given path
+ * Check if a file exists with the given path and return content
  * @param path A path to the file.
  * @resolve File exists.
  * @reject Error 'file not found'.
@@ -15,8 +15,8 @@ async function accessFile(path) {
             }
             else
                 data = Fs.readFileSync(path);
-                config = JSON.parse(data);
-                resolve(config);
+                parsedData = JSON.parse(data);
+                resolve(parsedData);
         });
     })
 }

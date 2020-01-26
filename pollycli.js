@@ -31,6 +31,9 @@ const argv = require('yargs')
   .help()
   .argv
 
+/**
+ * cli_init is the CLI handler for PollyApp2
+ */
 async function cli_init(args) {
   // console.log('From require: ', args);
 

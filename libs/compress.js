@@ -13,12 +13,6 @@ const compressing = require('compressing');
 
 async function unzip(sourcePath, destinationPath) {
     await compressing.zip.uncompress(sourcePath, destinationPath);
-    // .then(result =>{
-    //     resolve(result);
-    // })
-    // .catch(handleError => {
-    //     reject(new Error(handleError.toString()));
-    // });
 }
 
 /**
@@ -29,13 +23,7 @@ async function unzip(sourcePath, destinationPath) {
  * @Sample zipFolder('/path/to/folder', 'path/destincation/archive.zip');
  */
 async function zipFolder (sourcePath, destinationPath) {
-    await compressing.zip.compressDir(sourcePath, destinationPath)
-    // .then(result =>{
-    //     return result;
-    // })
-    // .catch(handleError => {
-    //     throw new Error(handleError.toString());
-    // });
+    await compressing.zip.compressDir(sourcePath, destinationPath);
 }
 
 /**

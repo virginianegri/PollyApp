@@ -3,19 +3,17 @@ const fs = require('fs');
 const convert = require('xml-js');
 
 /**
- * Synthesize speech request
- * @param folderPath Polly parameters: Text, OutputFormat, VoiceId
+ * getNotes takes a path to folder containing xmls and then parses each file for extrating lecture notes
+ * @param folderPath
  * @resolve Promise json object of all text
  * @reject Error
  * @sample  getNotes('path/to/xmls')
  */
 
 async function getNotes(folderPath) {
-    //passsing directoryPath and callback function
     return new Promise((resolve, reject) => {
         let texts=[];
 
-        // const directoryPath = path.join(__dirname, folderPath); //this wasn't working with moving it libs.
         //TODO: Need to absolute path from Driver funcation.
         fs.readdir(folderPath, function (err, files) {
             //handling error
@@ -34,10 +32,9 @@ async function getNotes(folderPath) {
     
                         var xml = require('fs').readFileSync(temp_path, 'utf8');
                         var result = convert.xml2json(xml, {compact: true, spaces: 4});
-                        // obj = JSON.parse(result);
+
+                        // After fetching the xml file content look for node name _text and parse to get lecture notes of a slide
                         text = result.match(/"_text": [A-Za-z ,."]*/g).toString().replace(`"_text": "`,'').replace(`"`,"");
-                        // text=obj['p:notes']['p:cSld']['p:spTree']['p:sp'][0]['p:txBody']['a:p'][0]['a:r']['a:t']._text;
-                        // console.log(obj['p:notes']['p:cSld']['p:spTree'])//['p:sp'][0]['p:txBody']['a:p'][0]['a:r']['a:t']._text;
                         let slide_number=file.match(/\d+/).toString();
                         texts.push([slide_number,text]);
                     }
@@ -52,10 +49,6 @@ async function getNotes(folderPath) {
     }); 
 }
 
-// let test_path = './SharedFolder/pptx/demo 3/ppt/notesSlides/';
-// getNotes(test_path).then((result)=>{
-//     console.log(result);
-// })
 module.exports = {
     getNotes
 }

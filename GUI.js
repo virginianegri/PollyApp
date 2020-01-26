@@ -26,6 +26,9 @@ const error = chalk.bold.red;
 const success = chalk.bold.green;
 const info = chalk.bold.yellow;
 
+/**
+ * startApp is GUI controller for PollyApp2. It is called recursively for each itteration
+ */
 async function startApp() {
     // Initial prompt interface
     clear();

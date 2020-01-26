@@ -14,6 +14,22 @@ const relPath = './SharedFolder/pptx/';
 const delay = (duration) =>
   new Promise(resolve => setTimeout(resolve, duration));
 
+/**
+ * processPPTX take a fileName and perform following operations: 
+ * 1. Convert pptx to zip
+ * 2. Extract zip
+ * 3. Fetch config and authenticate AWS Polly
+ * 4. Extract notes from extracted zip file
+ * 5. Call processPPTXAudioHelper (Which converts text to audio and place at output path)
+ * 6. zip the content of folder back
+ * 7. convert zip to pptx
+ * 8. delete content of folder after new zip is created (This is done with explicit delay to prevent deletion of content before zipping process)
+ * @param fileName
+ * @resolve Polly object
+ * @reject Error 
+ * @sample processPPTXFile('demo 3.pptx');
+ */
+
 async function processPPTXFile(fileName) {
     let fileNameSplit = fileName.split('.')
     fileName = fileNameSplit[0];
@@ -35,8 +51,6 @@ async function processPPTXFile(fileName) {
     await delay(5000);
     await removeDir(`${relPath}${fileName}`);
 }
-
-// processPPTXFile('demo 3.pptx');
 
 module.exports = {
     processPPTXFile
