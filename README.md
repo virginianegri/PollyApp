@@ -1,4 +1,4 @@
-# Polly App 2
+# Polly App
 
 A Nodejs based application that exploits Text-to-Speech service provided by Amazon Polly to perform the following transformations
 * Convert text file (.txt format) to audio file (.mp3) and multiple text files simultaneously present in a folder to multiple audio files.
