@@ -12,7 +12,7 @@ const { generateAllAudios } = require('./libs/generateAllAudios');
 
 const { processPPTXFile } = require('./libs/processPPTXFile');
 
-const { restartQuestion, pollyQuestion, pollyExtQuestion, audioQuestions, typeQuestions } = require('./libs/questions'); 
+const { restartQuestion, pollyQuestion, pollyExtQuestion, audioQuestions, typeQuestions, configQuestions } = require('./libs/questions'); 
 
 const questionMap = {
     typeQuestion: 'Text',
@@ -39,8 +39,21 @@ async function startApp() {
                 horizontalLayout: 'default',
                 font: 'digital'
             })), '\n');
+
+    let finalConfig = null;
     
-    let finalConfig = await checkConfig('./config.json');
+    // If configuration is not present create config.json
+    try {
+        finalConfig = await checkConfig('./config.json');
+    }
+    catch(error) {
+        let config = await inquirer.prompt(configQuestions);
+
+        let data = JSON.stringify(config);
+        Fs.writeFileSync('./config.json', data);
+
+        finalConfig = await checkConfig('./config.json');
+    }
 
     await authenticate(finalConfig.config, finalConfig.sharedConfig.aws_pool_id);
 

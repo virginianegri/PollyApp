@@ -13,10 +13,11 @@ async function accessFile(path) {
                 console.log(('\n File not found! ' + path + ' \n'));
                 reject(err);
             }
-            else
+            else {
                 data = Fs.readFileSync(path);
                 parsedData = JSON.parse(data);
                 resolve(parsedData);
+            }
         });
     })
 }

@@ -1,3 +1,4 @@
 *.mp3
 node_modules
+config.json
 .DS_Store
