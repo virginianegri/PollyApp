@@ -21,6 +21,7 @@ dependencies (including the AWS SDK for Node.js) can be installed with:
 * node pollycli singletext --filename <filename of file placed under SharedFolder/texts/>
 * node pollycli multitext
 * node pollycli singlepptx --filename "<filename of file placed under SharedFolder/pptx/>"
+* node pollycli createconfig --pathsharedconfig </path to shared folder>
 
 ## License
 
