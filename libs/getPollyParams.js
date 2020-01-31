@@ -19,7 +19,19 @@
 
 function getPollyParams (textToSpeech, sharedConfig) {
     const pollyParams = sharedConfig.polly_params;
-    pollyParams.VoiceId = sharedConfig.default_voice;
+
+    // fetch speaker voice with #speaker voice# regex
+    let speakerVoice = textToSpeech.match(/#[a-zA-Z]*#/g);
+    if(speakerVoice) {
+        textToSpeech = textToSpeech.replace(speakerVoice, '');  //remove speaker voice from original text
+
+        let voiceId = speakerVoice.toString().trim('').replace('#','').replace('#','').trim(''); 
+        pollyParams.VoiceId = voiceId;
+    }
+    else {
+        pollyParams.VoiceId = sharedConfig.default_voice;
+    }
+
     pollyParams.Text = textToSpeech;
     return pollyParams;
 }

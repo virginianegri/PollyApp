@@ -75,7 +75,8 @@ async function cli_init(args) {
       }
     }
     catch(error) {
-      console.log('Please use createconfig command to create config');
+      console.log(error);
+      // console.log('Please use createconfig command to create config');
     }
   }
 }

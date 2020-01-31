@@ -34,8 +34,10 @@ async function getNotes(folderPath) {
                         var result = convert.xml2json(xml, {compact: true, spaces: 4});
 
                         // After fetching the xml file content look for node name _text and parse to get lecture notes of a slide
-                        text = result.match(/"_text": [A-Za-z ,."]*/g).toString().replace(`"_text": "`,'').replace(`"`,"");
+                        text = result.match(/"_text": [#A-Za-z ,."]*/g).toString().replace(/,"_text": [A-Za-z ,."] */g,'').replace(/"_text":[A-Za-z ,.] */g,'').replace(/"*/g,'');
                         let slide_number=file.match(/\d+/).toString();
+
+                    
                         texts.push([slide_number,text]);
                     }
                 }
