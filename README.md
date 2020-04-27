@@ -2,7 +2,7 @@
 
 A Nodejs based application that exploits Text-to-Speech service provided by Amazon Polly to perform the following transformations
 * Convert text file (.txt format) to audio file (.mp3) and multiple text files simultaneously present in a folder to multiple audio files.
-* In addition to that the main functionality is to read the footer notes in the Microsoft PowerPoint Presentation (.pptx format), converting them to audios using Amazon Polly and then inserting those audios in the corresponding slides in the deck.
+* Read the footer notes of a Microsoft PowerPoint Presentation file (.pptx extension), convert them into audios using Amazon Polly and insert the audio files into the corresponding slides in the deck
 
 ## Requirements
 
@@ -12,7 +12,6 @@ dependencies (including the AWS SDK for Node.js) can be installed with:
     npm install
 
 ## Running the app
-### Creating the Configuration file
     node pollycli createconfig SharedFolder
 ### Running the app in Command line GUI mode
     node GUI
@@ -24,6 +23,14 @@ dependencies (including the AWS SDK for Node.js) can be installed with:
 * node pollycli multitext
 * node pollycli singlepptx --filename "<filename of file placed under SharedFolder/pptx/>"
 * node pollycli createconfig --pathsharedconfig </path to shared folder>
+
+### Demo
+#### Running the Singlepptx command
+##### Configuration
+    node pollycli singlepptx --filename "demo.pptx"
+##### Description  
+* The command takes as input the file "demo.pptx" placed under SharedFolder/pptx/
+* The result is a new .pptx file "demo_new.pptx" placed in the same folder with the audio files generated from the footer notes
 
 ## License
 
