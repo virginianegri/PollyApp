@@ -12,6 +12,8 @@ dependencies (including the AWS SDK for Node.js) can be installed with:
     npm install
 
 ## Running the app
+### Creating the Configuration file
+    node pollycli createconfig SharedFolder
 ### Running the app in Command line GUI mode
     node GUI
 ### Running the app in Simple Command line 
