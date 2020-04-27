@@ -12,6 +12,7 @@ dependencies (including the AWS SDK for Node.js) can be installed with:
     npm install
 
 ## Running the app
+### Creating the Configuration file
     node pollycli createconfig SharedFolder
 ### Running the app in Command line GUI mode
     node GUI
@@ -26,7 +27,6 @@ dependencies (including the AWS SDK for Node.js) can be installed with:
 
 ### Demo
 #### Running the Singlepptx command
-##### Configuration
     node pollycli singlepptx --filename "demo.pptx"
 ##### Description  
 * The command takes as input the file "demo.pptx" placed under SharedFolder/pptx/
