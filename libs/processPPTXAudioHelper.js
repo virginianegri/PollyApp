@@ -9,13 +9,17 @@ const { generateAudio } = require('./polly');
  * @reject Error 
  * @sample processPPTXAudioHelper(['Some text I want to convert'], Json, 'filename', './<path>/);
  */
+
+const delay = (duration) =>
+new Promise(resolve => setTimeout(resolve, duration));
+
 async function processPPTXAudioHelper (notes, finalConfig, fileName, relPath) {
-    return new Promise((resolve)=>{
+    return new Promise(async (resolve)=>{
         promiseArray = [];
         for(i in notes){
-            let pollyParams = getPollyParams(`<speak>${notes[i][1]}</speak>`, finalConfig.sharedConfig)
+            let pollyParams = getPollyParams(notes[i][1], finalConfig.sharedConfig)
             promiseArray.push(generateAudio(pollyParams, `media${notes[i][0]}`, `${relPath}${fileName}/ppt/media/`));
-    
+            await delay(200);
         };
         Promise.all(promiseArray).then((response)=>{
             resolve(response);

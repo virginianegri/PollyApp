@@ -1,6 +1,8 @@
 const path = require('path');
 const fs = require('fs');
-const convert = require('xml-js');
+
+const Entities = require('html-entities').AllHtmlEntities;
+const entities = new Entities();
 
 /**
  * getNotes takes a path to folder containing xmls and then parses each file for extrating lecture notes
@@ -22,7 +24,6 @@ async function getNotes(folderPath) {
                 reject(err);
             }
             //listing all files using forEach
-            var count=0;
             files.forEach(function (file) {
                 // Do whatever you want to do with the file
                 try {
@@ -30,14 +31,22 @@ async function getNotes(folderPath) {
                         name=file.toString();
                         temp_path=folderPath+file;
     
-                        var xml = require('fs').readFileSync(temp_path, 'utf8');
-                        var result = convert.xml2json(xml, {compact: true, spaces: 4});
-
-                        // After fetching the xml file content look for node name _text and parse to get lecture notes of a slide
-                        text = result.match(/"_text": [#A-Za-z ,."]*/g).toString().replace(/,"_text": [A-Za-z ,."] */g,'').replace(/"_text":[A-Za-z ,.] */g,'').replace(/"*/g,'');
+                        let xmlContent = require('fs').readFileSync(temp_path, 'utf8');
+                        
+                        // Extract slide notes from xml using <a:t> tags
+                        let openTextTag = xmlContent.indexOf('<a:t>')
+                        let closeTextTag = 0
+                        let endTextTag = xmlContent.indexOf('</p:txBody>')
+                        let text = ''
+                        while (openTextTag < endTextTag && openTextTag != -1) {
+                            closeTextTag = xmlContent.indexOf('</a:t>', openTextTag)
+                            text += entities.decode(xmlContent.slice(openTextTag+5, closeTextTag))
+                            openTextTag = xmlContent.indexOf('<a:t>', closeTextTag)
+                        }
+                        // Add <speak> tag for Polly
+                        text = '<speak>' + text + '</speak>'
+                        
                         let slide_number=file.match(/\d+/).toString();
-
-                    
                         texts.push([slide_number,text]);
                     }
                 }
